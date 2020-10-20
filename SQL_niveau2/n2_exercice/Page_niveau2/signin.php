@@ -18,8 +18,8 @@
                 echo "Email non valide";
             }
         } ?>
-        <p>Mot de passe: <input type="password" name="MotDePasse"></p>
-        <p>Confirmez le mot de passe: <input type="password" name="MotDePasse1"></p>
+        <p>Mot de passe: <input type="text" name="MotDePasse"></p>
+        <p>Confirmez le mot de passe: <input type="text" name="MotDePasse1"></p>
         <p>Cochez si vous etes:<br>
             <label>Professionel</label><input type="radio" name="Statut" value="Professionel" id="">
             <label>Particulier</label><input type="radio" name="Statut" value="Particulier" id=""></p>
@@ -50,18 +50,20 @@
             $MotDePasse1 = $_POST["MotDePasse1"];
             $statut = $_POST["Statut"];
             $checkConditions = $_POST["Conditions"];
+            
         }
     }
 
     if (empty($_POST['Nom']) || empty($_POST['Prenom']) || empty($_POST['Email']) || empty($_POST['MotDePasse']) || empty($_POST['MotDePasse1']) || empty($_POST['Statut'])) {
-        echo "ERREUR : tous les champs n'ont pas ete renseignés.";
-    } elseif (!empty($_POST['Nom']) || !empty($_POST['Prenom']) || !empty($_POST['Email']) || !empty($_POST['MotDePasse']) || !empty($_POST['MotDePasse1']) || !empty($_POST['Statut'])) {
-        if ($_POST['MotDePasse'] != $_POST['MotDePasse1']) {
-            echo "mot de passe incorrect";
-        } else {
-            $motDePasseCrypt = password_hash($motDePasse, PASSWORD_BCRYPT, $options); //cela cree une nouveau mot de passe ajoutons le cryptage et le cost aux mot de passe cree
-        }
-    } else {
+        echo "ERREUR : tous les champs n'ont pas ete renseignés.";}
+    elseif (!empty($_POST['Nom']) || !empty($_POST['Prenom']) || !empty($_POST['Email']) || !empty($_POST['MotDePasse']) || !empty($_POST['MotDePasse1']) || !empty($_POST['Statut'])) 
+            {
+            if (preg_match('@[A-Z]@', $motDePasse)) 
+                {return "Mot de passe doit contenir au mois une lettre majuscule, une lettre miniscule, et un chiffre.";}
+            elseif ($_POST['MotDePasse'] != $_POST['MotDePasse1']) {echo "mot de passe incorrect";}
+            else {$motDePasseCrypt = password_hash($motDePasse, PASSWORD_BCRYPT, $options);} //cela cree une nouveau mot de passe ajoutons le cryptage et le cost aux mot de passe cree
+            }
+     else {
 
         try {
             $dbco = new PDO("mysql:host=$servername; dbname=n2_exo", $username, $passwordDB);
@@ -85,7 +87,7 @@
         echo "<br>Vous etes inscrit!";
     }
 
-
+    //aaaa8RRRa
 
 
     ?>
