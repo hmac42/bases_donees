@@ -4,39 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>signin.php</title>
 </head>
 
 <body>
 
-    <form action="signin.php" method="post">
-        <p>Nom:
-            <input type="text" name="Nom"></p>
-        <p>Prenom:
-            <input type="text" name="Prenom"></p>
-        <p>Email:
-            <input type="email" name="Email"></p>
-        <?php if (isset($email)) {
-            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                echo "Email non valide";
-            }
-        } ?>
-
-        <p>Mot de passe:
-            <input type="text" name="MotDePasse"></p>
-        <p>Confirmez le mot de passe:
-            <input type="text" name="MotDePasseconfirm"></p>
-        <p>Cochez si vous etes:<br>
-            <label>Professionel</label>
-            <input type="radio" name="Statut" value="Professionel" id="">
-            <label>Particulier</label>
-            <input type="radio" name="Statut" value="Particulier" id=""></p>
-        <p>Accepter les conditions:
-            <input type="checkbox" name="Conditions" id=""></p>
-        <p><input type="submit" value="Envoyer" name="envoyer"></p>
-    </form>
-
-    <a href="MDPoublie.php">Mot de passe oublié</a><br>
 
     <?php
 
@@ -77,61 +49,84 @@
                     !empty($_POST['Email']) ||
                     !empty($_POST['MotDePasse']) ||
                     !empty($_POST['MotDePasse1']) ||
-                    !empty($_POST['Statut'])
-                ) {
+                    !empty($_POST['Statut']))
+                 {
                     $condMDP = '/^(?=.{8,}$)(?=.*[A-Z])(?=.*[a-z])(?=.*\d)/';
                     $motDePasseCrypt = password_hash($_POST['MotDePasse'], PASSWORD_BCRYPT, $options);
 
                     if (preg_match($condMDP, $_POST['MotDePasse'])) {
+
                         if ($_POST['MotDePasse'] === $_POST['MotDePasseconfirm']) {
                             echo "mot de passe confirmé<br>";
+
+                            $dbco = new PDO("mysql:host=$servername; dbname=n2_exo", $username, $passwordDB);
+                            $dbco->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                            $verifEmail = $dbco->prepare("SELECT * FROM utilisateurs WHERE email = ?"); //on peut utiliser query a la place de prepare mais il faut preciser le parametre ciblé .....WHERE email = 'email' !!!
+                            $verifEmail->execute([$email]);
+                            $user = $verifEmail->fetch();
+
+                            if (!$user) {
+                                 //email n'existe pas
+                                try {
+
+                                    $dbco->beginTransaction();                                          //permet de démarrer ce qu’on appelle une transaction et de désactiver le mode autocommit.
+                                    $sql1 = "INSERT INTO utilisateurs(nomU, prenomU, email, motDePasse, statut)
+                                            VALUES('$nom', '$prenom', '$email', '$motDePasseCrypt','$statut')";
+                                    $dbco->exec($sql1);
+                                    $dbco->commit();                                                     //sert à valider une transaction, c’est-à-dire à valider l’application d’une ou d’un ensemble de requêtes SQL. Cette méthode va aussi replacer la connexion en mode autocommit.
+                                    echo 'Entrées ajoutées dans la table<br>';
+                                } catch (PDOException $e) {
+                                    $dbco->rollBack();                                  //  sert à annuler une transaction si l’on s’aperçoit d’une erreur.
+                                    echo "Erreur : " . $e->getMessage();
+                                }
+                                echo "<br>Vous etes inscrit!<br>";
+                            } else {
+                                $erreurEmail = "Il existe un compte associe a ce e-mail. Essayez un nouveau e-mail. <br>";
+                                
+                            } // verifie si le mail existe dans la base de donnees
+
                         } else {
-                            echo "confirmez mot de passe<br>";
-                            die;
+                            $erreurMotDePasse = 'Veuillez confirméz le mot de passe';
                         }
-                        echo "mot de passe bon<br>";
+                        $mdpBon = "mot de passe bon<br>";
                     } else {
                         echo "mot de passe pas conforme<br>";
-                        die;
                     }
-
-
-
-                    try {
-                        $dbco = new PDO("mysql:host=$servername; dbname=n2_exo", $username, $passwordDB);
-                        $dbco->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                        $dbco->beginTransaction();                                          //permet de démarrer ce qu’on appelle une transaction et de désactiver le mode autocommit.
-                        $sql1 = "INSERT INTO utilisateurs(nomU, prenomU, email, motDePasse, statut)
-                                VALUES('$nom', '$prenom', '$email', '$motDePasseCrypt','$statut')";
-
-                        $verifEmail = $dbco->prepare("SELECT * FROM utilisateurs WHERE email=?");
-                        $verifEmail->execute([$email]);
-                        $user = $verifEmail->fetch();
-                        if($user) { echo "email existe<br>"; die;} 
-                        else { echo "email n'existe pas<br>";} // verifie si le mail existe dans la base de donnees
-
-                        $dbco->exec($sql1);
-                        $dbco->commit();                                                     //sert à valider une transaction, c’est-à-dire à valider l’application d’une ou d’un ensemble de requêtes SQL. Cette méthode va aussi replacer la connexion en mode autocommit.
-                         
-                        
-                               
-                        echo 'Entrées ajoutées dans la table<br>';
-                    } catch (PDOException $e) {
-                        $dbco->rollBack();                                  //  sert à annuler une transaction si l’on s’aperçoit d’une erreur.
-                        echo "Erreur : " . $e->getMessage();
-                    }
-
-                    echo "<br>Vous etes inscrit!<br>";
                 }
             }
         }
     }
 
-
-
-
-
     ?>
-</body>
+<?php ?>
 
+    <form action="signin.php" method="post">
+        <p>Nom:
+            <input type="text" name="Nom"></p>
+        <p>Prenom:
+            <input type="text" name="Prenom"></p>
+        <p>Email:
+            <input type="email" name="Email"></p>
+            <?php if (isset($email)) {
+                        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                            echo "Email non valide";}} 
+                            if(isset($erreurEmail)){echo $erreurEmai;}?>
+        <p>Mot de passe:
+            <input type="text" name="MotDePasse"><span><?phpif(isset($mdpBon)){echo $mdpBon;}?> 
+        <p>Confirmez le mot de passe:
+            <input type="text" name="MotDePasseconfirm"></p><?php if(isset($erreurMotDePasse)){echo $erreurMotDePasse;}?>
+        <p>Cochez si vous etes:<br>
+            <label>Professionel</label>
+            <input type="radio" name="Statut" value="Professionel" id="">
+            <label>Particulier</label>
+            <input type="radio" name="Statut" value="Particulier" id=""></p>
+        <p>Accepter les conditions:
+            <input type="checkbox" name="Conditions" id=""></p>
+            <p><input type="submit" value="Envoyer" name="envoyer"></p>
+    </form>
+
+    
+
+
+</body>
 </html>
