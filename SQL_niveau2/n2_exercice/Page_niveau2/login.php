@@ -57,6 +57,7 @@
                     // $_SESSION['id'] = $user['id'];
                     $_SESSION['login'] = $login;
                     header("location: home.php");
+
                 } else {
                     $essaieConn = "A";
 
@@ -68,6 +69,7 @@
                     if ($countConn['countConn'] >= 4) {
                        // $tempsBloq= time();
                         echo "vous devez attendre 30 sec";
+                        $motDePasseOublie = '<a href="resetpassword.php">Mot de passe oublié</a>';
                         
                     } else {
                         try {
@@ -98,7 +100,7 @@
         <input type="submit" value="Envoyer" name="envoyer">
     </form>
     <?php if (isset($motDePasseOublie)){echo $motDePasseOublie;}?>
-    <a href="resetpassword.php">Mot de passe oublié</a>
+   
 </body>
 
 </html>
